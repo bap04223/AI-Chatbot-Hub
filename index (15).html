@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(rgba(15, 15, 35, 0.6), rgba(22, 33, 62, 0.6)), 
+                        url('https://images.unsplash.com/photo-1471864190281-a93a3070b6de?q.jpg') center center/cover no-repeat fixed;
+            color: #e2e8f0;
+            min-height: 125vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            zoom: 0.8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .hero {
+            margin-bottom: 4rem;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .chatbot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .chatbot-card {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid #334155;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .chatbot-card:nth-child(2) {
+            animation-delay: 0.6s;
+        }
+
+        .chatbot-card:nth-child(3) {
+            animation-delay: 0.8s;
+        }
+
+        .chatbot-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            background: rgba(26, 26, 46, 0.98);
+        }
+
+        .chatbot-card::before {
+            display: none;
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .text-chat .card-icon {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .voice-chat .card-icon {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        .avatar-chat .card-icon {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .chatbot-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .card-description {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .card-button {
+            color: #374151;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Specific button gradients matching their icons */
+        .text-chat .card-button {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .voice-chat .card-button {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        .avatar-chat .card-button {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .card-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .card-button:hover::before {
+            left: 100%;
+        }
+
+        .card-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Specific hover shadows matching the button colors */
+        .text-chat .card-button:hover {
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .voice-chat .card-button:hover {
+            box-shadow: 0 10px 25px rgba(67, 233, 123, 0.4);
+        }
+
+        .avatar-chat .card-button:hover {
+            box-shadow: 0 10px 25px rgba(250, 112, 154, 0.4);
+        }
+
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-tag {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .chatbot-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .chatbot-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .chatbot-grid {
+                gap: 1.5rem;
+            }
+            
+            .chatbot-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>AI Patient Hub</h1>
+            <p>Experience the future of Pharmacy consultation training with our advanced AI Patient interfaces. Choose your preferred interaction style and start enhancing your skills today.</p>
+        </div>
+
+        <div class="chatbot-grid">
+            <!-- Text Chat Card -->
+            <div class="chatbot-card text-chat">
+                <div class="card-icon">💬</div>
+                <h3 class="card-title">Text Chat</h3>
+                <p class="card-description">Classic text-based conversation interface for quick and efficient communication with our AI assistant.</p>
+                <div class="features">
+                    <span class="feature-tag">Fast Response</span>
+                    <span class="feature-tag">Mobile Friendly</span>
+                    <span class="feature-tag">Low Bandwidth</span>
+                </div>
+                <button onclick="confirmAndRedirect('https://bap04223.github.io/V0.0/', 'Text Chat')" class="card-button">Start Text Chat</button>
+            </div>
+
+            <!-- Voice Chat Card -->
+            <div class="chatbot-card voice-chat">
+                <div class="card-icon">🎤</div>
+                <h3 class="card-title">Voice Chat</h3>
+                <p class="card-description">Speak naturally and hear responses with our advanced voice recognition and text-to-speech technology.</p>
+                <div class="features">
+                    <span class="feature-tag">Voice Recognition</span>
+                    <span class="feature-tag">Natural Speech</span>
+                    <span class="feature-tag">Hands-Free</span>
+                </div>
+                <button onclick="confirmAndRedirect('https://bap04223.github.io/V1.3/', 'Voice Chat')" class="card-button">Start Voice Chat</button>
+            </div>
+
+            <!-- Avatar Video Chat Card -->
+            <div class="chatbot-card avatar-chat">
+                <div class="card-icon">🎭</div>
+                <h3 class="card-title">Avatar Video Chat</h3>
+                <p class="card-description">Immersive video chat experience with our AI avatar that provides visual cues and expressions.</p>
+                <div class="features">
+                    <span class="feature-tag">Visual Avatar</span>
+                    <span class="feature-tag">Expressions</span>
+                    <span class="feature-tag">Immersive</span>
+                </div>
+                <button onclick="confirmAndRedirect('https://bap04223.github.io/V2.3/', 'Avatar Chat')" class="card-button">Start Video Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add smooth scrolling and interaction effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.chatbot-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+
+function confirmAndRedirect(url, chatType) {
+    const confirmed = confirm(`You are about to access ${chatType} on an external site. Continue?`);
+    if (confirmed) {
+        window.location.href = url;
+    }
+}
+        
+    </script>
+</body>
+</html>
