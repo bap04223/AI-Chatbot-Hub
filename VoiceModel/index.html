@@ -56,7 +56,7 @@
 }
         
         /* Header section styling */
-       .header {
+      .header {
             text-align: center;
             margin-bottom: 30px;
             padding: 20px;
@@ -64,6 +64,12 @@
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             animation: fadeInUp 0.8s ease-out both;
+            position: relative;
+        }
+
+        .header-content {
+            position: relative;
+            width: 100%;
         }
         
         .header h1 {
@@ -311,18 +317,18 @@ select option {
             font-weight: bold;
         }
 
-        /* Back to Landing Page Button */
+/* Back to Landing Page Button */
 .back-to-landing-btn {
-    position: fixed;
-    top: 29px;
-    left: 88px;
-    z-index: 1000;
-    padding: 12px 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    padding: 8px 16px;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); 
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -332,7 +338,8 @@ select option {
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .back-to-landing-btn:hover {
@@ -1133,13 +1140,18 @@ a:hover {
 </a>
     <div class="container">
         <!-- Header section with title and description -->
-        <div class="header">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-    <div class="card-icon" style="margin: 0; background: linear-gradient(135deg, #43e97b, #38f9d7);">🎤</div>
-    <h1 style="margin: 0;">Chat-Bot Consultation Training</h1>
-    <div class="card-icon" style="margin: 0; background: linear-gradient(135deg, #43e97b, #38f9d7);">🎤</div>
-</div>
-            <p>Practice your consultation skills with our AI-powered patients</p>
+       <div class="header">
+            <div class="header-content">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                    <div class="card-icon" style="margin: 0; background: linear-gradient(135deg, #fa709a, #fee140);">🎭</div>
+                    <h1 style="margin: 0;">Avatar Video Consultation Training</h1>
+                    <div class="card-icon" style="margin: 0; background: linear-gradient(135deg, #fa709a, #fee140);">🎭</div>
+                </div>
+                <p>Practice your consultation skills with our AI-powered patients</p>
+                <a href="https://bap04223.github.io/Landing-Page/" class="back-to-landing-btn" title="Return to Landing Page">
+                    ← Back to Hub
+                </a>
+            </div>
         </div>       
            
         <!-- Main content grid -->
