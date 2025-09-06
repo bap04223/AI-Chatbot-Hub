@@ -7843,20 +7843,8 @@ function handleFullscreenChange() {
         videoWrapper.classList.add('video-fullscreen-active');
     }
     
-    // Force avatar video to use proper fullscreen dimensions with contain
-    const avatarVideo = document.getElementById('avatarVideo');
-    if (avatarVideo) {
-        avatarVideo.style.objectFit = 'contain';
-        avatarVideo.style.width = '100vw';
-        avatarVideo.style.height = '100vh';
-        avatarVideo.style.maxWidth = 'none';
-        avatarVideo.style.maxHeight = 'none';
-        avatarVideo.style.position = 'fixed';
-        avatarVideo.style.top = '0';
-        avatarVideo.style.left = '0';
-        avatarVideo.style.zIndex = '2';
-    }
     
+    // Let CSS handle all fullscreen video sizing
  
     
     // Force overlays to be visible
@@ -7898,21 +7886,7 @@ if (reviewOverlay) {
         videoWrapper.classList.remove('video-fullscreen-active');
     }
     
-    // Restore normal video dimensions
-    const avatarVideo = document.getElementById('avatarVideo');
-    if (avatarVideo) {
-        avatarVideo.style.objectFit = 'contain';
-        avatarVideo.style.width = '100%';
-        avatarVideo.style.height = '100%';
-        avatarVideo.style.maxWidth = '';
-        avatarVideo.style.maxHeight = '';
-        avatarVideo.style.position = 'absolute';
-        avatarVideo.style.top = '0';
-        avatarVideo.style.left = '0';
-        avatarVideo.style.zIndex = '2';
-    }
-
-        // CSS will handle restoration automatically
+            // CSS will handle restoration automatically
    
     // Reset overlay styles
     const timerDisplay = document.getElementById('timerDisplay');
