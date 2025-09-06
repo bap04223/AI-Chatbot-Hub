@@ -8170,9 +8170,19 @@ function updateAvatarFromScenario() {
                             currentScenario['Pre-generated Idle'];
     
     if (idleAnimationUrl && idleAnimationUrl.trim() !== '') {
-        window.preGeneratedIdleUrl = convertGoogleDriveUrl(idleAnimationUrl.trim());
-        console.log('Pre-generated idle URL found:', window.preGeneratedIdleUrl);
+        const convertedUrl = convertGoogleDriveUrl(idleAnimationUrl.trim());
+        // Always set the URL, even if it's the same - this ensures proper reset
+        window.preGeneratedIdleUrl = convertedUrl;
+        console.log('Pre-generated idle URL set:', window.preGeneratedIdleUrl);
         hasChanges = true;
+        
+        // Reset idle button state when scenario changes
+        const generateBtn = document.getElementById('generateIdleBtn');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = 'Check for Idle';
+            setButtonStatus('generateIdleBtn', 'pending', 'Check for Idle');
+        }
     } else {
         window.preGeneratedIdleUrl = null;
     }
