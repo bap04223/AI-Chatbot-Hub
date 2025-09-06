@@ -2284,6 +2284,17 @@ a:hover {
     transform: scale(1.1) rotate(5deg);
 }
 
+/* Fullscreen video-wrapper fixes - remove container constraints */
+.video-fullscreen-active,
+:fullscreen .video-fullscreen-active,
+:-webkit-full-screen .video-fullscreen-active,
+:-moz-full-screen .video-fullscreen-active {
+    height: 100vh !important;
+    width: 100vw !important;
+    max-height: none !important;
+    min-height: 0 !important;
+}
+
 /* Fullscreen video fixes - force avatar to scale like idle video */
 .video-fullscreen-active #avatarVideo,
 :fullscreen .video-fullscreen-active #avatarVideo,
@@ -2294,7 +2305,7 @@ a:hover {
     max-width: none !important;
     max-height: none !important;
     min-height: 0 !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
     display: block !important;
     margin: 0 auto !important;
