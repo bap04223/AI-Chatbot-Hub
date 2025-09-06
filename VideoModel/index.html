@@ -2282,7 +2282,20 @@ a:hover {
 
 .card-icon:hover {
     transform: scale(1.1) rotate(5deg);
-}  
+}
+
+/* Fullscreen video fixes - force proper contain sizing */
+.video-fullscreen-active #avatarVideo,
+:fullscreen .video-fullscreen-active #avatarVideo,
+:-webkit-full-screen .video-fullscreen-active #avatarVideo,
+:-moz-full-screen .video-fullscreen-active #avatarVideo {
+    object-fit: contain !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    object-position: center center !important;
+    max-width: none !important;
+    max-height: none !important;
+}
         
     </style>
 </head>
@@ -7805,6 +7818,16 @@ function handleFullscreenChange() {
         videoWrapper.classList.add('video-fullscreen-active');
     }
     
+    // Force avatar video to use proper fullscreen dimensions with contain
+    const avatarVideo = document.getElementById('avatarVideo');
+    if (avatarVideo) {
+        avatarVideo.style.objectFit = 'contain';
+        avatarVideo.style.width = '100vw';
+        avatarVideo.style.height = '100vh';
+        avatarVideo.style.maxWidth = 'none';
+        avatarVideo.style.maxHeight = 'none';
+    }
+    
     // Force overlays to be visible
     const timerDisplay = document.getElementById('timerDisplay');
     const patientBtn = document.getElementById('patientImageBtn');
@@ -7842,6 +7865,16 @@ if (reviewOverlay) {
     // Remove fullscreen class
     if (videoWrapper) {
         videoWrapper.classList.remove('video-fullscreen-active');
+    }
+    
+    // Restore normal video dimensions
+    const avatarVideo = document.getElementById('avatarVideo');
+    if (avatarVideo) {
+        avatarVideo.style.objectFit = 'contain';
+        avatarVideo.style.width = '100%';
+        avatarVideo.style.height = '100%';
+        avatarVideo.style.maxWidth = '';
+        avatarVideo.style.maxHeight = '';
     }
     
     // Reset overlay styles
