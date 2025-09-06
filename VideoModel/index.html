@@ -3606,8 +3606,8 @@ didSessionId = null;
     }
     
   // Clear current session's idle data but preserve cache for reuse
-    if (idleAnimationUrl) {
-        URL.revokeObjectURL(idleAnimationUrl);
+    if (idleAnimationUrl && !videoCache.getFromCache(videoCache.generateCacheKey(getAvatarConfiguration()))) {
+    URL.revokeObjectURL(idleAnimationUrl);
         idleAnimationUrl = null;
       }
     idleAnimationBlob = null;
