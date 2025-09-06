@@ -3605,11 +3605,11 @@ didSessionId = null;
         downloadBtn.disabled = true;
     }
     
-   // Clear current session's idle data but preserve cache for reuse
+  // Clear current session's idle data but preserve cache for reuse
     if (idleAnimationUrl) {
         URL.revokeObjectURL(idleAnimationUrl);
         idleAnimationUrl = null;
-    }
+      }
     idleAnimationBlob = null;
 
     // Don't clear the entire cache - let it persist for reuse
@@ -5322,6 +5322,20 @@ async function handleIdleAnimationSetup() {
         let cachedVideo = videoCache.getFromCache(cacheKey);
         if (cachedVideo) {
             console.log('Found idle animation in browser cache - using immediately!');
+            
+            // Validate and potentially recreate object URL
+            if (!cachedVideo.url || !cachedVideo.url.startsWith('blob:')) {
+                if (cachedVideo.blob) {
+                    cachedVideo.url = URL.createObjectURL(cachedVideo.blob);
+                    console.log('Recreated object URL from cached blob');
+                    // Update cache with new URL
+                    videoCache.storeInCache(cacheKey, cachedVideo);
+                } else {
+                    console.error('Cached video has no blob data');
+                    return false;
+                }
+            }
+            
             idleAnimationUrl = cachedVideo.url;
             idleAnimationBlob = cachedVideo.blob;
             
