@@ -2284,13 +2284,16 @@ a:hover {
     transform: scale(1.1) rotate(5deg);
 }
 
-/* Fullscreen video fixes - copy idle video settings exactly */
+/* Fullscreen video fixes - override ALL size constraints */
 .video-fullscreen-active #avatarVideo,
 :fullscreen .video-fullscreen-active #avatarVideo,
 :-webkit-full-screen .video-fullscreen-active #avatarVideo,
 :-moz-full-screen .video-fullscreen-active #avatarVideo {
     width: 100% !important;
     height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    min-height: 0 !important;
     object-fit: contain !important;
     display: block !important;
     margin: 0 auto !important;
@@ -2298,6 +2301,8 @@ a:hover {
     top: 0 !important;
     left: 0 !important;
     z-index: 2 !important;
+    border: none !important;
+    border-radius: 0 !important;
 }
 
        /* Fullscreen video fixes - force proper contain sizing */
