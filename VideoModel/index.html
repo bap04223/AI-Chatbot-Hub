@@ -3605,11 +3605,11 @@ didSessionId = null;
         downloadBtn.disabled = true;
     }
     
-// Clear browser cache for idle animations (optional - removes all cached idles)
-    if (videoCache && videoCache.memoryCache) {
-        videoCache.memoryCache.clear();
-        console.log('Cleared idle animation cache');
-    }
+   // Clear browser cache for idle animations (optional - removes all cached idles)
+   //  if (videoCache && videoCache.memoryCache) {
+   //     videoCache.memoryCache.clear();
+   //     console.log('Cleared idle animation cache');
+   //  }
     
     // Reset to default values but preserve configuration
     document.getElementById('didApiKey').value = currentApiKey;
