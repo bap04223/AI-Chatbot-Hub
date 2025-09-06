@@ -2284,17 +2284,20 @@ a:hover {
     transform: scale(1.1) rotate(5deg);
 }
 
-/* Fullscreen video fixes - force proper contain sizing */
+/* Fullscreen video fixes - copy idle video settings exactly */
 .video-fullscreen-active #avatarVideo,
 :fullscreen .video-fullscreen-active #avatarVideo,
 :-webkit-full-screen .video-fullscreen-active #avatarVideo,
 :-moz-full-screen .video-fullscreen-active #avatarVideo {
+    width: 100% !important;
+    height: 100% !important;
     object-fit: contain !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    object-position: center center !important;
-    max-width: none !important;
-    max-height: none !important;
+    display: block !important;
+    margin: 0 auto !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 2 !important;
 }
         
     </style>
@@ -7818,15 +7821,7 @@ function handleFullscreenChange() {
         videoWrapper.classList.add('video-fullscreen-active');
     }
     
-    // Force avatar video to use proper fullscreen dimensions with contain
-    const avatarVideo = document.getElementById('avatarVideo');
-    if (avatarVideo) {
-        avatarVideo.style.objectFit = 'contain';
-        avatarVideo.style.width = '100vw';
-        avatarVideo.style.height = '100vh';
-        avatarVideo.style.maxWidth = 'none';
-        avatarVideo.style.maxHeight = 'none';
-    }
+    // Avatar video will use CSS rules that match idle video exactly
     
     // Force overlays to be visible
     const timerDisplay = document.getElementById('timerDisplay');
@@ -7866,17 +7861,9 @@ if (reviewOverlay) {
     if (videoWrapper) {
         videoWrapper.classList.remove('video-fullscreen-active');
     }
-    
-    // Restore normal video dimensions
-    const avatarVideo = document.getElementById('avatarVideo');
-    if (avatarVideo) {
-        avatarVideo.style.objectFit = 'contain';
-        avatarVideo.style.width = '100%';
-        avatarVideo.style.height = '100%';
-        avatarVideo.style.maxWidth = '';
-        avatarVideo.style.maxHeight = '';
-    }
-    
+
+        // CSS will handle restoration automatically
+   
     // Reset overlay styles
     const timerDisplay = document.getElementById('timerDisplay');
     const patientBtn = document.getElementById('patientImageBtn');
