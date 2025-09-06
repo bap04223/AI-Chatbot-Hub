@@ -3605,11 +3605,17 @@ didSessionId = null;
         downloadBtn.disabled = true;
     }
     
-   // Clear browser cache for idle animations (optional - removes all cached idles)
-   //  if (videoCache && videoCache.memoryCache) {
-   //     videoCache.memoryCache.clear();
-   //     console.log('Cleared idle animation cache');
-   //  }
+   // Clear current session's idle data but preserve cache for reuse
+    if (idleAnimationUrl) {
+        URL.revokeObjectURL(idleAnimationUrl);
+        idleAnimationUrl = null;
+    }
+    idleAnimationBlob = null;
+
+    // Don't clear the entire cache - let it persist for reuse
+    // Only clear if you specifically want to force re-download
+    // videoCache.memoryCache.clear(); // COMMENTED OUT - preserves cache for efficiency
+    console.log('Reset idle animation for new session (cache preserved)');
     
     // Reset to default values but preserve configuration
     document.getElementById('didApiKey').value = currentApiKey;
