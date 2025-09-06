@@ -4517,26 +4517,8 @@ await connectStream();
 
 // AUTOMATICALLY HANDLE IDLE ANIMATION AFTER STREAM CONNECTION
 if (isStreamConnected) {
-    updateAvatarStatus('Stream connected, verifying stability...', 'loading');
-    
-    // Wait for stream to be truly stable
-    const isStable = await waitForStreamStability(3000);
-    if (!isStable) {
-        console.warn('Stream not fully stable, idle setup may fail');
-        updateAvatarStatus('Stream connected but unstable - idle may not load', 'warning');
-        // Continue anyway but with warning
-    }
-    
-    updateAvatarStatus('Setting up idle animation...', 'loading');
-    const idleSuccess = await handleIdleAnimationSetup();
-    
-    if (!idleSuccess) {
-        updateAvatarStatus('Stream connected - idle animation unavailable', 'success');
-    } else {
-        updateAvatarStatus('Avatar ready with idle animation', 'success');
-    }
-} else {
-    updateAvatarStatus('Stream connection failed', 'error');
+    updateAvatarStatus('Stream connected, setting up idle animation...', 'loading');
+    await handleIdleAnimationSetup();
 }
 
 // Set button to completed status
@@ -4556,33 +4538,6 @@ return false;
 }
 
       // ===== D-ID STREAMING CONNECTION FUNCTIONS =====
-
-// Add this function to verify stream stability
-async function waitForStreamStability(timeout = 5000) {
-    const startTime = Date.now();
-    
-    while (Date.now() - startTime < timeout) {
-        if (peerConnection && 
-            peerConnection.iceConnectionState === 'connected' && 
-            peerConnection.connectionState === 'connected') {
-            return true;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    return false;
-}
-
-function isConnectionHealthy() {
-    if (!peerConnection || !isStreamConnected) {
-        return false;
-    }
-    
-    const iceState = peerConnection.iceConnectionState;
-    const connectionState = peerConnection.connectionState;
-    
-    return (iceState === 'connected' || iceState === 'completed') &&
-           (connectionState === 'connected');
-}
 
 // Show connect button for streaming
 function showConnectButton() {
@@ -5324,19 +5279,13 @@ async function generateIdleAnimation() {
         generateBtn.disabled = true;
         generateBtn.innerHTML = '⏳ Checking for idle...';
         
-        // Check connection health before attempting setup
-        if (!isConnectionHealthy()) {
-            console.warn('Connection not healthy, idle setup may fail');
-            showStatus('Connection unstable - idle setup may fail', 'warning');
-        }
-        
-        // Use the enhanced setup logic with retry
+        // Use the simplified setup logic
         const success = await handleIdleAnimationSetup();
         
         if (success) {
             showStatus('Idle animation ready!', 'success');
         } else {
-            showStatus('No idle animation available. Check console for details.', 'info');
+            showStatus('No idle animation available. Use external generator to create idle animations.', 'info');
         }
         
     } catch (error) {
@@ -5345,8 +5294,8 @@ async function generateIdleAnimation() {
         
         const generateBtn = document.getElementById('generateIdleBtn');
         generateBtn.disabled = false;
-        generateBtn.innerHTML = 'Retry Idle Setup';
-        setButtonStatus('generateIdleBtn', 'pending', 'Retry Idle Setup');
+        generateBtn.innerHTML = 'Check for Idle';
+        setButtonStatus('generateIdleBtn', 'pending', 'Check for Idle');
         
     } finally {
         isGeneratingIdle = false;
@@ -5354,21 +5303,10 @@ async function generateIdleAnimation() {
 }
 
 
-// Enhanced idle animation setup with retry logic
-async function handleIdleAnimationSetup(retryCount = 0) {
-    const maxRetries = 2;
-    
+// Simplified idle animation setup - only handles cached and pre-generated
+async function handleIdleAnimationSetup() {
     try {
-        console.log(`=== Starting idle animation setup (attempt ${retryCount + 1}/${maxRetries + 1}) ===`);
-        
-        // Log connection state for debugging
-        console.log('Idle setup state check:', {
-            hasPreGeneratedUrl: !!window.preGeneratedIdleUrl,
-            isStreamConnected: isStreamConnected,
-            connectionHealthy: isConnectionHealthy(),
-            peerConnectionState: peerConnection?.connectionState,
-            iceConnectionState: peerConnection?.iceConnectionState
-        });
+        console.log('=== Starting idle animation setup (cached/pre-generated only) ===');
         
         // Get current avatar configuration
         const config = getAvatarConfiguration();
@@ -5393,69 +5331,38 @@ async function handleIdleAnimationSetup(retryCount = 0) {
         
         // Check for pre-generated URL from scenario
         if (window.preGeneratedIdleUrl) {
-            console.log(`Found pre-generated idle URL, fetching (attempt ${retryCount + 1})...`);
+            console.log('Found pre-generated idle URL, fetching...');
             updateAvatarStatus('Loading pre-generated idle animation...', 'loading');
             
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-                
-                const response = await fetch(window.preGeneratedIdleUrl, {
-                    signal: controller.signal,
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
+                const response = await fetch(window.preGeneratedIdleUrl);
+                if (response.ok) {
+                    const videoBlob = await response.blob();
+                    
+                    // Cache it for this session
+                    const objectUrl = URL.createObjectURL(videoBlob);
+                    const videoData = {
+                        blob: videoBlob,
+                        url: objectUrl,
+                        source: 'pre_generated'
+                    };
+                    
+                    videoCache.storeInCache(cacheKey, videoData);
+                    idleAnimationUrl = objectUrl;
+                    idleAnimationBlob = videoBlob;
+                    
+                    setButtonCompleted('generateIdleBtn', 'Idle Ready (Pre-generated) ✓');
+                    document.getElementById('downloadIdleBtn').disabled = false;
+                    updateAvatarStatus('Avatar ready with pre-generated idle animation', 'success');
+                    
+                    if (isStreamConnected) {
+                        startIdleMonitoring();
                     }
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    return true;
                 }
-                
-                const videoBlob = await response.blob();
-                
-                // Validate the blob is actually a video
-                if (videoBlob.size === 0) {
-                    throw new Error('Received empty video file');
-                }
-                
-                console.log('Successfully fetched pre-generated idle:', videoBlob.size, 'bytes');
-                
-                // Cache it for this session
-                const objectUrl = URL.createObjectURL(videoBlob);
-                const videoData = {
-                    blob: videoBlob,
-                    url: objectUrl,
-                    source: 'pre_generated'
-                };
-                
-                videoCache.storeInCache(cacheKey, videoData);
-                idleAnimationUrl = objectUrl;
-                idleAnimationBlob = videoBlob;
-                
-                setButtonCompleted('generateIdleBtn', 'Idle Ready (Pre-generated) ✓');
-                document.getElementById('downloadIdleBtn').disabled = false;
-                updateAvatarStatus('Avatar ready with pre-generated idle animation', 'success');
-                
-                if (isStreamConnected && isConnectionHealthy()) {
-                    startIdleMonitoring();
-                }
-                return true;
-                
-            } catch (fetchError) {
-                console.warn(`Pre-generated idle fetch failed (attempt ${retryCount + 1}):`, fetchError.message);
-                
-                // Retry if we haven't exceeded max retries
-                if (retryCount < maxRetries) {
-                    console.log(`Retrying idle setup in ${retryCount + 1} seconds...`);
-                    await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
-                    return await handleIdleAnimationSetup(retryCount + 1);
-                } else {
-                    console.error('All idle animation fetch attempts failed');
-                    updateAvatarStatus('Pre-generated idle failed after retries', 'error');
-                }
+            } catch (error) {
+                console.warn('Failed to fetch pre-generated idle:', error);
+                updateAvatarStatus('Pre-generated idle failed to load', 'error');
             }
         }
         
@@ -5468,17 +5375,10 @@ async function handleIdleAnimationSetup(retryCount = 0) {
         return false; // No idle available, but don't fail initialization
         
     } catch (error) {
-        console.error(`Idle setup error (attempt ${retryCount + 1}):`, error);
-        
-        if (retryCount < maxRetries && !error.name === 'AbortError') {
-            console.log(`Retrying idle setup in ${(retryCount + 1) * 2} seconds...`);
-            await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
-            return await handleIdleAnimationSetup(retryCount + 1);
-        } else {
-            updateAvatarStatus('Avatar ready (idle setup failed after retries)', 'success');
-            setButtonStatus('generateIdleBtn', 'pending', 'Idle Setup Failed');
-            return false;
-        }
+        console.error('Idle setup error:', error);
+        updateAvatarStatus('Avatar ready (idle setup failed)', 'success');
+        setButtonStatus('generateIdleBtn', 'pending', 'Idle Setup Failed');
+        return false;
     }
 }
 
@@ -5592,13 +5492,6 @@ function startIdleMonitoring() {
         clearInterval(idleCheckInterval);
     }
 
-    // Verify we have all requirements before starting
-    console.log('Starting idle monitoring:', {
-        hasIdleUrl: !!idleAnimationUrl,
-        hasIdleBlob: !!idleAnimationBlob,
-        isStreamConnected: isStreamConnected,
-        connectionHealthy: isConnectionHealthy()
-    });
       
     // Start the idle animation running in background immediately
     startIdleAnimation();
