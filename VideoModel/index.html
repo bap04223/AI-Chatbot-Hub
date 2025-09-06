@@ -2299,6 +2299,23 @@ a:hover {
     left: 0 !important;
     z-index: 2 !important;
 }
+
+       /* Fullscreen video fixes - force proper contain sizing */
+.video-fullscreen-active #avatarVideo,
+:fullscreen .video-fullscreen-active #avatarVideo,
+:-webkit-full-screen .video-fullscreen-active #avatarVideo,
+:-moz-full-screen .video-fullscreen-active #avatarVideo {
+    object-fit: contain !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    object-position: center center !important;
+    max-width: none !important;
+    max-height: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 2 !important;
+} 
         
     </style>
 </head>
@@ -7821,7 +7838,21 @@ function handleFullscreenChange() {
         videoWrapper.classList.add('video-fullscreen-active');
     }
     
-    // Avatar video will use CSS rules that match idle video exactly
+    // Force avatar video to use proper fullscreen dimensions with contain
+    const avatarVideo = document.getElementById('avatarVideo');
+    if (avatarVideo) {
+        avatarVideo.style.objectFit = 'contain';
+        avatarVideo.style.width = '100vw';
+        avatarVideo.style.height = '100vh';
+        avatarVideo.style.maxWidth = 'none';
+        avatarVideo.style.maxHeight = 'none';
+        avatarVideo.style.position = 'fixed';
+        avatarVideo.style.top = '0';
+        avatarVideo.style.left = '0';
+        avatarVideo.style.zIndex = '2';
+    }
+    
+ 
     
     // Force overlays to be visible
     const timerDisplay = document.getElementById('timerDisplay');
@@ -7854,12 +7885,26 @@ if (reviewOverlay) {
     // Sync review sections
     syncReviewSections();
         
-    } else {
+   } else {
     console.log('Exited fullscreen mode');
     
     // Remove fullscreen class
     if (videoWrapper) {
         videoWrapper.classList.remove('video-fullscreen-active');
+    }
+    
+    // Restore normal video dimensions
+    const avatarVideo = document.getElementById('avatarVideo');
+    if (avatarVideo) {
+        avatarVideo.style.objectFit = 'contain';
+        avatarVideo.style.width = '100%';
+        avatarVideo.style.height = '100%';
+        avatarVideo.style.maxWidth = '';
+        avatarVideo.style.maxHeight = '';
+        avatarVideo.style.position = 'absolute';
+        avatarVideo.style.top = '0';
+        avatarVideo.style.left = '0';
+        avatarVideo.style.zIndex = '2';
     }
 
         // CSS will handle restoration automatically
