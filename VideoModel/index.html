@@ -3605,26 +3605,11 @@ didSessionId = null;
         downloadBtn.disabled = true;
     }
     
-   // Clear current session's idle data but preserve cache for reuse
-    if (idleAnimationUrl) {
-        URL.revokeObjectURL(idleAnimationUrl);
-        idleAnimationUrl = null;
+// Clear browser cache for idle animations (optional - removes all cached idles)
+    if (videoCache && videoCache.memoryCache) {
+        videoCache.memoryCache.clear();
+        console.log('Cleared idle animation cache');
     }
-    idleAnimationBlob = null;
-    
-    // Reset idle video element properly
-    const idleVideo = document.getElementById('idleVideo');
-    if (idleVideo) {
-        idleVideo.pause();
-        idleVideo.src = '';
-        idleVideo.style.opacity = '0';
-        idleVideo.removeAttribute('src'); // Force complete reset
-    }
-
-    // Don't clear the entire cache - let it persist for reuse
-    // Only clear if you specifically want to force re-download
-    // videoCache.memoryCache.clear(); // COMMENTED OUT - preserves cache for efficiency
-    console.log('Reset idle animation for new session (cache preserved)');
     
     // Reset to default values but preserve configuration
     document.getElementById('didApiKey').value = currentApiKey;
@@ -5327,21 +5312,12 @@ async function handleIdleAnimationSetup() {
         const config = getAvatarConfiguration();
         const cacheKey = videoCache.generateCacheKey(config);
         
-        // Check browser memory cache first
+      // Check browser memory cache first
         let cachedVideo = videoCache.getFromCache(cacheKey);
         if (cachedVideo) {
             console.log('Found idle animation in browser cache - using immediately!');
-            
-            // Create fresh blob URL from cached blob
-            idleAnimationUrl = URL.createObjectURL(cachedVideo.blob);
+            idleAnimationUrl = cachedVideo.url;
             idleAnimationBlob = cachedVideo.blob;
-            
-            // Update cache with fresh URL
-            videoCache.storeInCache(cacheKey, {
-                blob: cachedVideo.blob,
-                url: idleAnimationUrl,
-                source: cachedVideo.source
-            });
             
             setButtonCompleted('generateIdleBtn', 'Idle Ready (Cached) ✓');
             document.getElementById('downloadIdleBtn').disabled = false;
@@ -8972,3 +8948,4 @@ document.addEventListener('keydown', function(event) {
     </script>
 </body>
 </html>
+
