@@ -3575,21 +3575,30 @@ didSessionId = null;
     stopIdleMonitoring();
     isPlayingIdle = false;
     
-    // Clear idle animation data
+    // Reset idle video element FIRST
+    const idleVideo = document.getElementById('idleVideo');
+    if (idleVideo) {
+        idleVideo.pause();
+        idleVideo.removeAttribute('src');
+        idleVideo.load(); // Force reload of video element
+        idleVideo.style.opacity = '0';
+        idleVideo.currentTime = 0;
+    }
+    
+    // Clear idle animation data but preserve cache
     if (idleAnimationUrl) {
-        URL.revokeObjectURL(idleAnimationUrl);
+        // Only revoke if it's not from cache
+        const config = getAvatarConfiguration();
+        const cacheKey = videoCache.generateCacheKey(config);
+        const cachedData = videoCache.getFromCache(cacheKey);
+        
+        if (!cachedData || cachedData.url !== idleAnimationUrl) {
+            URL.revokeObjectURL(idleAnimationUrl);
+        }
         idleAnimationUrl = null;
     }
     idleAnimationBlob = null;
     window.preGeneratedIdleUrl = null;
-    
-    // Reset idle video element
-    const idleVideo = document.getElementById('idleVideo');
-    if (idleVideo) {
-        idleVideo.pause();
-        idleVideo.src = '';
-        idleVideo.style.opacity = '0';
-    }
     
     // Reset idle animation buttons to initial state
     const generateBtn = document.getElementById('generateIdleBtn');
@@ -5323,17 +5332,20 @@ async function handleIdleAnimationSetup() {
         if (cachedVideo) {
             console.log('Found idle animation in browser cache - using immediately!');
             
-            // Validate and potentially recreate object URL
-            if (!cachedVideo.url || !cachedVideo.url.startsWith('blob:')) {
-                if (cachedVideo.blob) {
-                    cachedVideo.url = URL.createObjectURL(cachedVideo.blob);
-                    console.log('Recreated object URL from cached blob');
-                    // Update cache with new URL
-                    videoCache.storeInCache(cacheKey, cachedVideo);
-                } else {
-                    console.error('Cached video has no blob data');
-                    return false;
+            // Always recreate object URL for new session to avoid stale references
+            if (cachedVideo.blob) {
+                // Revoke old URL if it exists
+                if (cachedVideo.url) {
+                    URL.revokeObjectURL(cachedVideo.url);
                 }
+                // Create fresh object URL
+                cachedVideo.url = URL.createObjectURL(cachedVideo.blob);
+                console.log('Created fresh object URL from cached blob:', cachedVideo.url);
+                // Update cache with new URL
+                videoCache.storeInCache(cacheKey, cachedVideo);
+            } else {
+                console.error('Cached video has no blob data');
+                return false;
             }
             
             idleAnimationUrl = cachedVideo.url;
@@ -5446,6 +5458,27 @@ function downloadIdleAnimation() {
     }
 }
 
+// Debug function for idle animation
+function debugIdleAnimation() {
+    const idleVideo = document.getElementById('idleVideo');
+    console.log('=== IDLE ANIMATION DEBUG ===');
+    console.log('idleAnimationUrl:', idleAnimationUrl);
+    console.log('idleAnimationBlob:', idleAnimationBlob);
+    console.log('idleVideo element:', idleVideo);
+    if (idleVideo) {
+        console.log('idleVideo.src:', idleVideo.src);
+        console.log('idleVideo.style.opacity:', idleVideo.style.opacity);
+        console.log('idleVideo.paused:', idleVideo.paused);
+        console.log('idleVideo.readyState:', idleVideo.readyState);
+        console.log('idleVideo.videoWidth:', idleVideo.videoWidth);
+        console.log('idleVideo.videoHeight:', idleVideo.videoHeight);
+        console.log('idleVideo.currentTime:', idleVideo.currentTime);
+        console.log('idleVideo.duration:', idleVideo.duration);
+    }
+    console.log('isPlayingIdle:', isPlayingIdle);
+    console.log('==============================');
+}
+
 // Start idle animation (always running in background)
 function startIdleAnimation() {
     if (!idleAnimationUrl || !idleAnimationBlob) {
@@ -5461,22 +5494,39 @@ function startIdleAnimation() {
     
     console.log('Starting background idle animation');
     
-    // Set idle animation source
-    if (idleVideo.src !== idleAnimationUrl) {
-        idleVideo.src = idleAnimationUrl;
-    }
+   // Force fresh source assignment
+    console.log('Setting idle video source to:', idleAnimationUrl);
+    idleVideo.src = '';
+    idleVideo.load();
+    idleVideo.src = idleAnimationUrl;
+    idleVideo.load();
     
     idleVideo.loop = true;
     idleVideo.muted = true;
+    
+    // Add load event listener
+    idleVideo.addEventListener('loadeddata', function onLoadedData() {
+        console.log('Idle video loaded successfully');
+        idleVideo.removeEventListener('loadeddata', onLoadedData);
+    });
+    
+    idleVideo.addEventListener('error', function onError(e) {
+        console.error('Idle video load error:', e);
+        debugIdleAnimation();
+    });
     idleVideo.play().then(() => {
         console.log('Background idle animation started');
         isPlayingIdle = true;
         
-        // Show idle layer, hide avatar layer
+        // Debug after successful play
+        debugIdleAnimation();
+        
+        // Show idle layer, fade out avatar layer
         showIdleLayer();
         
     }).catch(error => {
         console.error('Idle animation play error:', error);
+        debugIdleAnimation();
     });
 }
 
