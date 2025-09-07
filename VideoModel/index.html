@@ -5213,7 +5213,6 @@ if (avatarVideo) {
     const handleSpeechStart = () => {
         console.log('Avatar video actually started playing');
         updateActivityTime(); // Only update when video actually plays
-        showAvatarLayer(); // IMMEDIATELY show avatar when speech starts
         avatarVideo.removeEventListener('playing', handleSpeechStart);
         avatarVideo.removeEventListener('loadeddata', handleSpeechStart);
     };
@@ -5550,14 +5549,10 @@ function showAvatarLayer() {
     const avatarVideo = document.getElementById('avatarVideo');
     
     if (idleVideo && avatarVideo) {
-        console.log('Showing avatar layer - hiding idle immediately');
+        console.log('Showing avatar layer');
         avatarVideo.style.opacity = '1';
         idleVideo.style.opacity = '0'; // Completely hide idle when avatar is active
         updateAvatarStatus('Avatar speaking', 'playing');
-        
-        // Force immediate transition with CSS
-        avatarVideo.style.transition = 'opacity 0.1s ease-in-out';
-        idleVideo.style.transition = 'opacity 0.1s ease-in-out';
     }
 }
 
@@ -5610,7 +5605,7 @@ function startIdleMonitoring() {
             showIdleLayer();
         }
         
-    }, 50); // Check every 50ms for responsive transitions
+    }, 100); // Check every 100ms for responsive transitions
     
     console.log('Idle monitoring with overlay system started');
 }
@@ -9033,4 +9028,5 @@ document.addEventListener('keydown', function(event) {
     </script>
 </body>
 </html>
+
 
