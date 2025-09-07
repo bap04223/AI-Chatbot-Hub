@@ -5173,11 +5173,15 @@ if (manualVoiceSelection) {
 
 console.log('Final voice configuration:', voiceConfig);
 
-        // Prepare the script payload with consistent framing
+// Add 2 seconds of silence at the beginning for smooth transition
+const silencePrefix = '<break time="2s"/>'; // SSML break tag for 2-second pause
+const textWithSilence = `${silencePrefix}${text}`;
+
+// Prepare the script payload with consistent framing
 let scriptPayload = {
     script: {
         type: 'text',
-        input: text,
+        input: textWithSilence,
         provider: voiceConfig
     },
     config: {
