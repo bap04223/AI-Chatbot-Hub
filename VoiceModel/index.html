@@ -106,7 +106,7 @@
         /* Grid layout for main content - MODIFIED FOR 3 COLUMNS */
         .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 2.5fr;
+    grid-template-columns: 1fr 1.2fr 2.2fr;
     gap: 20px;
     flex: 1;
     align-items: stretch;
@@ -1176,7 +1176,7 @@ select option {
     min-height: 400px; /* Ensure substantial height */
 }
 
-.avatar-image {
+.avatar-image, .avatar-video {
     width: 100%;
     height: auto;
     border-radius: 8px;
@@ -1189,10 +1189,14 @@ select option {
     max-height: 500px; /* Increased max height */
 }
 
-.avatar-image:hover {
+.avatar-image:hover, .avatar-video:hover {
     transform: scale(1.02);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     border-color: var(--primary-color);
+}
+
+.avatar-video {
+    background: var(--card-background);
 }
 
 .avatar-loading {
@@ -1231,6 +1235,33 @@ select option {
     background: transparent;
     border: none;
     box-shadow: none;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    min-height: 400px;
+    max-height: 500px;
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    background: var(--input-background);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.avatar-placeholder:hover {
+    border-color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.avatar-placeholder-icon {
+    font-size: 4rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    opacity: 0.5;
 }
 
 /* Status Button States - Add after existing button styles */
@@ -1637,7 +1668,7 @@ select option {
 
 /* Adjust grid when panels are collapsed */
 .grid.config-collapsed {
-    grid-template-columns: 40px 1fr 2.5fr;
+    grid-template-columns: 40px 1.1fr 2.5fr;
     transition: all 0.3s ease;
 }
 
@@ -1986,9 +2017,12 @@ Random Scenario
             📷 No Scenario Selected
         </button>
         
-        <!-- Avatar Image Container -->
-        <div class="avatar-container" id="avatarContainer">
-            <div class="avatar-loading" id="avatarLoading">Loading avatar...</div>
+       <!-- Avatar Image Container -->
+        <div class="avatar-container" id="avatarContainer" style="display: block;">
+            <div class="avatar-placeholder">
+                <div class="avatar-placeholder-icon">👤</div>
+                <div class="avatar-name no-avatar">Select a scenario to load patient avatar</div>
+            </div>
         </div>
     </div>
 </div>
@@ -4193,8 +4227,7 @@ function updatePatientImageButton() {
             const modal = document.getElementById('imageModal');
             modal.classList.remove('show');
         }
-        
-        // Load and display avatar image
+        // Load and display avatar video or image
         function loadAvatarImage() {
             const avatarContainer = document.getElementById('avatarContainer');
             
@@ -4203,13 +4236,23 @@ function updatePatientImageButton() {
                 return;
             }
             
-            // Check for avatar URL in column T (Avatar URL)
+            // Check for idle animation URL first (column AA)
+            const idleAnimationUrl = currentScenario['Idle Animation URL'] || 
+                                   currentScenario['Idle Animation'] ||
+                                   currentScenario['Animation URL'] ||
+                                   currentScenario['Video URL'];
+            
+            // Check for static avatar URL as fallback
             const avatarUrl = currentScenario['Avatar URL'] || 
                              currentScenario['Avatar'] ||
                              currentScenario['Avatar Image'] ||
                              currentScenario['Patient Avatar'];
             
-            if (!avatarUrl || avatarUrl.trim() === '') {
+            // Use idle animation if available, otherwise use static image
+            const mediaUrl = idleAnimationUrl && idleAnimationUrl.trim() !== '' ? idleAnimationUrl : avatarUrl;
+            const isVideo = idleAnimationUrl && idleAnimationUrl.trim() !== '';
+            
+            if (!mediaUrl || mediaUrl.trim() === '') {
                 hideAvatar();
                 return;
             }
@@ -4219,20 +4262,82 @@ function updatePatientImageButton() {
             avatarContainer.innerHTML = '<div class="avatar-loading" id="avatarLoading">Loading avatar...</div>';
             
             // Convert Google Drive URLs if needed
+            const convertedUrl = convertGoogleDriveUrl(mediaUrl.trim());
+            
+            const patientName = currentScenario['Patient Name'] || currentScenario['Name'] || 'Patient';
+            
+            if (isVideo) {
+                // Create video element for idle animation
+                const video = document.createElement('video');
+                
+                video.oncanplaythrough = function() {
+                    // Video loaded successfully
+                    avatarContainer.innerHTML = `
+                        <video src="${convertedUrl}" class="avatar-video" autoplay loop muted playsinline>
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="avatar-name">${patientName}</div>
+                    `;
+                    console.log('Avatar video loaded successfully:', convertedUrl);
+                };
+                
+                video.onerror = function() {
+                    // Try alternative Google Drive format if applicable
+                    if (mediaUrl.includes('drive.google.com') && !video.hasTriedAlternative) {
+                        console.log('First video format failed, trying alternative...');
+                        video.hasTriedAlternative = true;
+                        
+                        const fileIdMatch = mediaUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                        if (fileIdMatch && fileIdMatch[1]) {
+                            const fileId = fileIdMatch[1];
+                            const alternativeUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                            console.log('Trying alternative video URL:', alternativeUrl);
+                            video.src = alternativeUrl;
+                            return;
+                        }
+                    }
+                    
+                    // Video failed to load, try fallback to static image if available
+                    if (avatarUrl && avatarUrl.trim() !== '') {
+                        console.log('Video failed, falling back to static avatar image');
+                        loadStaticAvatar(avatarUrl, patientName);
+                    } else {
+                        // No fallback available
+                        avatarContainer.innerHTML = `
+                            <div class="avatar-error">
+                                Avatar video could not be loaded.<br>
+                                <small>Check URL: ${mediaUrl}</small>
+                            </div>
+                            <div class="avatar-name">${patientName}</div>
+                        `;
+                        console.error('Avatar video failed to load:', mediaUrl);
+                    }
+                };
+                
+                // Start loading the video
+                video.src = convertedUrl;
+            } else {
+                // Load static image
+                loadStaticAvatar(mediaUrl, patientName);
+            }
+        }
+        
+        // Helper function to load static avatar image
+        function loadStaticAvatar(avatarUrl, patientName) {
+            const avatarContainer = document.getElementById('avatarContainer');
             const convertedUrl = convertGoogleDriveUrl(avatarUrl.trim());
             
             // Create image element
             const img = new Image();
             
             img.onload = function() {
-    // Image loaded successfully
-    const patientName = currentScenario['Patient Name'] || currentScenario['Name'] || 'Patient';
-    avatarContainer.innerHTML = `
-        <img src="${convertedUrl}" alt="Patient Avatar" class="avatar-image">
-        <div class="avatar-name">${patientName}</div>
-    `;
-    console.log('Avatar loaded successfully:', convertedUrl);
-};
+                // Image loaded successfully
+                avatarContainer.innerHTML = `
+                    <img src="${convertedUrl}" alt="Patient Avatar" class="avatar-image">
+                    <div class="avatar-name">${patientName}</div>
+                `;
+                console.log('Avatar image loaded successfully:', convertedUrl);
+            };
             
             img.onerror = function() {
                 // Try alternative Google Drive format if applicable
@@ -4251,14 +4356,13 @@ function updatePatientImageButton() {
                 }
                 
                 // Image failed to load completely
-const patientName = currentScenario['Patient Name'] || currentScenario['Name'] || 'Patient';
-avatarContainer.innerHTML = `
-    <div class="avatar-error">
-        Avatar image could not be loaded.<br>
-        <small>Check URL: ${avatarUrl}</small>
-    </div>
-    <div class="avatar-name">${patientName}</div>
-`;
+                avatarContainer.innerHTML = `
+                    <div class="avatar-error">
+                        Avatar could not be loaded.<br>
+                        <small>Check URL: ${avatarUrl}</small>
+                    </div>
+                    <div class="avatar-name">${patientName}</div>
+                `;
                 console.error('Avatar failed to load:', avatarUrl);
             };
             
@@ -4266,11 +4370,16 @@ avatarContainer.innerHTML = `
             img.src = convertedUrl;
         }
         
-        // Hide avatar container
+        // Reset avatar container to placeholder state
         function hideAvatar() {
     const avatarContainer = document.getElementById('avatarContainer');
-    avatarContainer.style.display = 'none';
-    avatarContainer.innerHTML = '';
+    avatarContainer.style.display = 'block';
+    avatarContainer.innerHTML = `
+        <div class="avatar-placeholder">
+            <div class="avatar-placeholder-icon">👤</div>
+            <div class="avatar-name no-avatar">Select a scenario to load patient avatar</div>
+        </div>
+    `;
 }
         
         
@@ -5067,6 +5176,9 @@ if (!submitWebhookUrl) {
                 button.textContent = '📷 No Scenario Selected';
                 button.disabled = true;
                 hideAvatar();
+            } else {
+                // If scenario is selected, just reset to placeholder until avatar loads
+                hideAvatar();
             }
         }
         
@@ -5486,3 +5598,9 @@ function closeHelpModal(event) {
     </script>
 </body>
 </html>
+
+
+
+
+
+
