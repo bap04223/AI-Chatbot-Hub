@@ -161,6 +161,8 @@
     overflow-y: auto;
     min-height: 0;
     max-height: none;
+    display: flex;
+    flex-direction: column;
 }
         
         /* Form input styling */
@@ -1165,6 +1167,72 @@ select option {
             cursor: not-allowed;
         }
 
+        /* Avatar Image Styles */
+.avatar-container {
+    margin-top: 15px;
+    width: 100%;
+    display: none; /* Hidden by default */
+    flex: 1; /* Take up remaining space in the card */
+    min-height: 400px; /* Ensure substantial height */
+}
+
+.avatar-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    display: block;
+    object-fit: cover; /* This will crop to fill space and eliminate letterboxing */
+    min-height: 400px; /* Minimum height to ensure substantial size */
+    max-height: 500px; /* Increased max height */
+}
+
+.avatar-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary-color);
+}
+
+.avatar-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.avatar-error {
+    text-align: center;
+    padding: 15px;
+    color: var(--danger-color);
+    font-size: 0.9em;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+    border: 1px solid var(--danger-color);
+}
+
+        .avatar-name {
+    text-align: center;
+    margin-top: 10px;
+    padding: 8px 12px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--input-background);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-name.no-avatar {
+    color: var(--text-secondary);
+    font-style: italic;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
 /* Status Button States - Add after existing button styles */
 .btn-status-pending {
     background-color: var(--danger-color) !important;
@@ -1908,7 +1976,7 @@ Load Scenario Sets
 Random Scenario
 </button>
 
-        <!-- Patient Image Button -->
+      <!-- Patient Image Button -->
         <button 
             class="patient-image-btn disabled" 
             id="patientImageBtn"
@@ -1916,7 +1984,12 @@ Random Scenario
             disabled
         >
             📷 No Scenario Selected
-        </button>   
+        </button>
+        
+        <!-- Avatar Image Container -->
+        <div class="avatar-container" id="avatarContainer">
+            <div class="avatar-loading" id="avatarLoading">Loading avatar...</div>
+        </div>
     </div>
 </div>
 </div>
@@ -3798,7 +3871,7 @@ function applyScenarioVoiceSettings() {
     saveConfig();
 }
         
-        // Update patient image button state based on scenario
+// Update patient image button state based on scenario
 function updatePatientImageButton() {
     const button = document.getElementById('patientImageBtn');
     
@@ -3807,6 +3880,7 @@ function updatePatientImageButton() {
         button.className = 'patient-image-btn disabled';
         button.textContent = '📷 No Scenario Selected';
         button.disabled = true;
+        hideAvatar();
         return;
     }
     
@@ -3848,6 +3922,9 @@ function updatePatientImageButton() {
         button.innerHTML = '❌ No Patient Image';
         button.disabled = true;
     }
+    
+    // Load avatar image
+    loadAvatarImage();
 }
 
         // Show patient image modal with gallery functionality
@@ -3906,7 +3983,7 @@ function updatePatientImageButton() {
             currentImageIndex = index;
             const imageUrl = patientImages[index];
             
-            // Check for image URL - if somehow empty, skip
+           // Check for image URL - if somehow empty, skip
             if (!imageUrl || imageUrl.trim() === '') {
                 showStatus('No image URL available for this patient', 'error');
                 return;
@@ -4104,6 +4181,98 @@ function updatePatientImageButton() {
             const modal = document.getElementById('imageModal');
             modal.classList.remove('show');
         }
+
+
+// Close patient image modal
+        function closeImageModal(event) {
+            // If event is passed and it's not the backdrop click, ignore
+            if (event && event.target !== event.currentTarget && event.type === 'click') {
+                return;
+            }
+            
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+        }
+        
+        // Load and display avatar image
+        function loadAvatarImage() {
+            const avatarContainer = document.getElementById('avatarContainer');
+            
+            if (!currentScenario) {
+                hideAvatar();
+                return;
+            }
+            
+            // Check for avatar URL in column T (Avatar URL)
+            const avatarUrl = currentScenario['Avatar URL'] || 
+                             currentScenario['Avatar'] ||
+                             currentScenario['Avatar Image'] ||
+                             currentScenario['Patient Avatar'];
+            
+            if (!avatarUrl || avatarUrl.trim() === '') {
+                hideAvatar();
+                return;
+            }
+            
+            // Show container and loading state
+            avatarContainer.style.display = 'block';
+            avatarContainer.innerHTML = '<div class="avatar-loading" id="avatarLoading">Loading avatar...</div>';
+            
+            // Convert Google Drive URLs if needed
+            const convertedUrl = convertGoogleDriveUrl(avatarUrl.trim());
+            
+            // Create image element
+            const img = new Image();
+            
+            img.onload = function() {
+    // Image loaded successfully
+    const patientName = currentScenario['Patient Name'] || currentScenario['Name'] || 'Patient';
+    avatarContainer.innerHTML = `
+        <img src="${convertedUrl}" alt="Patient Avatar" class="avatar-image">
+        <div class="avatar-name">${patientName}</div>
+    `;
+    console.log('Avatar loaded successfully:', convertedUrl);
+};
+            
+            img.onerror = function() {
+                // Try alternative Google Drive format if applicable
+                if (avatarUrl.includes('drive.google.com') && !img.hasTriedAlternative) {
+                    console.log('First avatar format failed, trying alternative...');
+                    img.hasTriedAlternative = true;
+                    
+                    const fileIdMatch = avatarUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        const fileId = fileIdMatch[1];
+                        const alternativeUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                        console.log('Trying alternative avatar URL:', alternativeUrl);
+                        img.src = alternativeUrl;
+                        return;
+                    }
+                }
+                
+                // Image failed to load completely
+const patientName = currentScenario['Patient Name'] || currentScenario['Name'] || 'Patient';
+avatarContainer.innerHTML = `
+    <div class="avatar-error">
+        Avatar image could not be loaded.<br>
+        <small>Check URL: ${avatarUrl}</small>
+    </div>
+    <div class="avatar-name">${patientName}</div>
+`;
+                console.error('Avatar failed to load:', avatarUrl);
+            };
+            
+            // Start loading the image
+            img.src = convertedUrl;
+        }
+        
+        // Hide avatar container
+        function hideAvatar() {
+    const avatarContainer = document.getElementById('avatarContainer');
+    avatarContainer.style.display = 'none';
+    avatarContainer.innerHTML = '';
+}
+        
         
         // Add keyboard support for modal and shortcuts
 document.addEventListener('keydown', function(event) {
@@ -4891,12 +5060,13 @@ if (!submitWebhookUrl) {
             }
             synthesis.cancel();
             
-            // Reset patient image button if no scenario is selected
+           // Reset patient image button and avatar if no scenario is selected
             if (!currentScenario) {
                 const button = document.getElementById('patientImageBtn');
                 button.className = 'patient-image-btn disabled';
                 button.textContent = '📷 No Scenario Selected';
                 button.disabled = true;
+                hideAvatar();
             }
         }
         
