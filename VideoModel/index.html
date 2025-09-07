@@ -1132,6 +1132,45 @@ input:focus, select:focus, textarea:focus {
             font-weight: 600;
         }
 
+        /* Avatar placeholder styles - ADD THESE NEW STYLES */
+.avatar-placeholder {
+    width: 100%;
+    min-height: 450px;
+    max-height: 500px;
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    background: var(--input-background);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.avatar-placeholder:hover {
+    border-color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.avatar-placeholder-icon {
+    font-size: 4rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.avatar-placeholder-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 1.1em;
+    line-height: 1.4;
+    max-width: 300px;
+}
+
         /* Avatar loading animation */
         .avatar-loading {
             display: inline-block;
@@ -2817,7 +2856,7 @@ a:hover {
                 <div class="card-content">
                     <!-- D-ID Avatar Video Container -->
 <div class="avatar-container" id="avatarContainer">
-   <div class="video-wrapper">
+<div class="video-wrapper">
    <!-- Timer Overlay -->
    <div id="timerDisplay" class="timer-display timer-overlay timer-ready">
     <div class="timer-text">Timer: <span id="timerValue">Ready</span></div>
@@ -2856,6 +2895,12 @@ a:hover {
         </button>
     </div>
 </div>
+
+   <!-- Avatar Placeholder (shown before initialization) -->
+   <div id="avatarPlaceholder" class="avatar-placeholder" style="display: block;">
+       <div class="avatar-placeholder-icon">🎭</div>
+       <div class="avatar-placeholder-text">Select a scenario and initialize avatar to begin video consultation</div>
+   </div>
    
    <!-- Idle Animation Video (Background Layer) -->
 <video 
@@ -2872,7 +2917,7 @@ a:hover {
         height: 100%;
         object-fit: contain;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: block;
+        display: none;
         margin: 0 auto;
         position: absolute;
         top: 0;
@@ -2897,7 +2942,7 @@ a:hover {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        display: block;
+        display: none;
         margin: 0 auto;
         position: absolute;
         top: 0;
@@ -3636,14 +3681,18 @@ didSessionId = null;
     // videoCache.memoryCache.clear(); // COMMENTED OUT - preserves cache for efficiency
     console.log('Reset idle animation for new session (cache preserved)');
     
-    // Reset to default values but preserve configuration
-    document.getElementById('didApiKey').value = currentApiKey;
-    document.getElementById('serviceType').value = currentServiceType;
-    document.getElementById('sourceUrl').value = currentSourceUrl;
-    document.getElementById('presenterId').value = currentPresenterId;
-    document.getElementById('chunkSize').value = currentChunkSize;
-    document.getElementById('streamingMode').checked = currentStreamingMode;
-    document.getElementById('voiceSelection').value = currentVoiceSelection;
+// Reset to default values but preserve configuration
+document.getElementById('didApiKey').value = currentApiKey;
+document.getElementById('serviceType').value = currentServiceType;
+document.getElementById('sourceUrl').value = currentSourceUrl;
+document.getElementById('presenterId').value = currentPresenterId;
+document.getElementById('chunkSize').value = currentChunkSize;
+document.getElementById('streamingMode').checked = currentStreamingMode;
+document.getElementById('voiceSelection').value = currentVoiceSelection;
+
+// Show placeholder for new session
+showAvatarPlaceholder();
+updatePlaceholderText('Select a scenario and initialize avatar to begin video consultation');
     
     // Force update service fields display
     updateServiceFields();
@@ -4520,6 +4569,9 @@ async function initializeDID() {
         console.log('D-ID Streaming API initialized successfully');
 isAvatarInitialized = true;
 setupAvatarActivityListeners(); // Add this line
+
+// Hide placeholder when avatar is initialized
+hideAvatarPlaceholder();
         
         // Test permissions and fetch presenters
         try {
@@ -5864,6 +5916,42 @@ async function getPresenterDrivers(presenterId) {
             }
         }
 
+        // Avatar placeholder management functions
+function showAvatarPlaceholder() {
+    const placeholder = document.getElementById('avatarPlaceholder');
+    const avatarVideo = document.getElementById('avatarVideo');
+    const idleVideo = document.getElementById('idleVideo');
+    
+    if (placeholder) {
+        placeholder.style.display = 'flex';
+    }
+    if (avatarVideo) {
+        avatarVideo.style.display = 'none';
+    }
+    if (idleVideo) {
+        idleVideo.style.display = 'none';
+    }
+    
+    console.log('Avatar placeholder shown');
+}
+
+function hideAvatarPlaceholder() {
+    const placeholder = document.getElementById('avatarPlaceholder');
+    
+    if (placeholder) {
+        placeholder.style.display = 'none';
+    }
+    
+    console.log('Avatar placeholder hidden');
+}
+
+function updatePlaceholderText(text) {
+    const placeholderText = document.querySelector('.avatar-placeholder-text');
+    if (placeholderText) {
+        placeholderText.textContent = text;
+    }
+}
+
        // ===== PRESENTER VERIFICATION AND API TESTING =====
 // INSERT THE NEW FUNCTIONS HERE
 
@@ -6351,8 +6439,11 @@ option.textContent = `${i}. ${row[0]}${indicators}`;
         currentScenario[header] = row[index];
     });
     
-    console.log('Selected scenario:', currentScenario);
-    showStatus(`Scenario loaded: ${currentScenario['Patient Name']}`, 'success');
+console.log('Selected scenario:', currentScenario);
+showStatus(`Scenario loaded: ${currentScenario['Patient Name']}`, 'success');
+
+// Update placeholder text when scenario is selected
+updatePlaceholderText('Initialize avatar to begin video consultation with ' + (currentScenario['Patient Name'] || 'patient'));
     
     // Update patient image button based on image availability
     updatePatientImageButton();
@@ -7715,12 +7806,16 @@ function forceScrollToBottom() {
     conversationHistory = [];
     
     // Reset patient image button if no scenario is selected
-    if (!currentScenario) {
+if (!currentScenario) {
     const button = document.getElementById('patientImageBtn');
     button.className = 'patient-image-btn-overlay disabled';
     button.textContent = '❌';
     button.disabled = true;
     button.title = 'No Scenario Selected';
+    
+    // Show placeholder when no scenario
+    showAvatarPlaceholder();
+    updatePlaceholderText('Select a scenario and initialize avatar to begin video consultation');
 }
            // Update avatar button tooltip if no scenario
     const avatarBtn = document.getElementById('initializeAvatarBtn');
