@@ -6877,6 +6877,16 @@ async function loadChatbotConfigurations() {
 });
                 }
             }
+
+            // Add this debugging code after the chatbotConfigurations.push() call
+console.log('=== DEBUGGING ROW DATA ===');
+console.log('Full row:', row);
+console.log('Row length:', row.length);
+console.log('Deepgram API Key (column F, index 5):', row[5]);
+console.log('ElevenLabs API Key (column G, index 6):', row[6]);
+console.log('D-ID API Key (column H, index 7):', row[7]);
+console.log('D-ID API Key after trim:', row[7] ? row[7].trim() : 'undefined/null');
+console.log('==============================');
             
             // AUTO-POPULATE API KEYS FROM FIRST CONFIGURATION
 if (chatbotConfigurations.length > 0) {
@@ -6899,6 +6909,15 @@ if (chatbotConfigurations.length > 0) {
 }
             
             populateChatbotDropdown();
+
+            // Add debugging in the auto-population section
+console.log('=== AUTO-POPULATION DEBUG ===');
+console.log('First config:', firstConfig);
+console.log('D-ID API Key from config:', firstConfig.didApiKey);
+console.log('Field element value before:', document.getElementById('didApiKey').value);
+// ... existing auto-population code ...
+console.log('Field element value after:', document.getElementById('didApiKey').value);
+console.log('===============================');
             
             // Enhanced status message showing what was auto-populated
 let statusParts = [`Loaded ${chatbotConfigurations.length} configurations`];
