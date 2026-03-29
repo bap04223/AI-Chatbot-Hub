@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2985,7 +2985,16 @@ a:hover {
                     <label for="feedbackEmail">Email (Optional):</label>
                     <input type="email" id="feedbackEmail" placeholder="your.email@example.com">
                 </div>
-                
+
+                <div class="form-group">
+                    <label>Which simulation model did you use?</label>
+                    <div style="display:flex; gap:1.5rem; margin-top:0.5rem; flex-wrap:wrap;">
+                        <label style="display:flex; align-items:center; gap:0.4rem; font-weight:normal; font-size:0.95rem;"><input type="checkbox" name="model_type" value="Text" id="model_text"> Text</label>
+                        <label style="display:flex; align-items:center; gap:0.4rem; font-weight:normal; font-size:0.95rem;"><input type="checkbox" name="model_type" value="Voice" id="model_voice"> Voice</label>
+                        <label style="display:flex; align-items:center; gap:0.4rem; font-weight:normal; font-size:0.95rem;"><input type="checkbox" name="model_type" value="Video" id="model_video" checked> Video</label>
+                    </div>
+                </div>
+
                 <div class="rating-instructions">
                     <h4>Post-Simulation Feedback Form</h4>
                     <p><strong>Rating Scale: 1 (Strongly Disagree) - 10 (Strongly Agree)</strong></p>
@@ -2997,7 +3006,7 @@ a:hover {
                 </div>
                 
                 <div class="form-group rating-group">
-                    <label>1. The AI patient responded in a realistic and believable manner throughout the consultation.</label>
+                    <label>1. The AI patient felt realistic and believable as a character throughout the consultation.</label>
                     <div class="rating-scale">
                         <div class="scale-labels">
                             <span>Strongly Disagree</span>
@@ -3041,7 +3050,7 @@ a:hover {
                 </div>
                 
                 <div class="form-group rating-group">
-                    <label>3. The AI patient's responses were appropriate and relevant to my questions and interventions.</label>
+                    <label>3. I was able to interact with the AI patient in a natural and intuitive way.</label>
                     <div class="rating-scale">
                         <div class="scale-labels">
                             <span>Strongly Disagree</span>
@@ -3090,7 +3099,7 @@ a:hover {
                 </div>
                 
                 <div class="form-group rating-group">
-                    <label>5. The scenario challenged me to apply my pharmaceutical knowledge effectively.</label>
+                    <label>5. The simulation helped me develop my pharmacy practice skills, such as patient counselling and consultation.</label>
                     <div class="rating-scale">
                         <div class="scale-labels">
                             <span>Strongly Disagree</span>
@@ -3134,7 +3143,7 @@ a:hover {
                 </div>
                 
                 <div class="form-group rating-group">
-                    <label>7. The simulation provided valuable learning opportunities that complement traditional teaching methods.</label>
+                    <label>7. I found the simulation engaging and enjoyable to use.</label>
                     <div class="rating-scale">
                         <div class="scale-labels">
                             <span>Strongly Disagree</span>
@@ -8883,14 +8892,15 @@ async function submitFeedback(event) {
         const feedbackData = {
             name: document.getElementById('feedbackName').value.trim(),
             email: document.getElementById('feedbackEmail').value.trim(),
+            model_selection: Array.from(document.querySelectorAll('input[name="model_type"]:checked')).map(cb => cb.value).join(', '),
             ratings: {
                 realistic_responses: getRadioValue('realistic_responses'),
                 user_friendly: getRadioValue('user_friendly'),
-                appropriate_responses: getRadioValue('appropriate_responses'),
+                natural_interaction: getRadioValue('appropriate_responses'),
                 communication_skills: getRadioValue('communication_skills'),
-                pharma_knowledge: getRadioValue('pharma_knowledge'),
+                practice_skills: getRadioValue('pharma_knowledge'),
                 confidence: getRadioValue('confidence'),
-                learning_value: getRadioValue('learning_value'),
+                enjoyment: getRadioValue('learning_value'),
                 recommend: getRadioValue('recommend')
             },
             additional_comments: document.getElementById('feedbackMessage').value.trim(),
@@ -8986,35 +8996,37 @@ function formatFeedbackAsCSV(data) {
         'Session ID',
         'Name',
         'Email',
+        'Simulation Model',
         'Scenario Name',
         'Chatbot Config',
-        'Realistic Responses (1-10)',
+        'Realistic & Believable Character (1-10)',
         'User Friendly Interface (1-10)',
-        'Appropriate Responses (1-10)',
+        'Natural & Intuitive Interaction (1-10)',
         'Communication Skills Practice (1-10)',
-        'Pharmaceutical Knowledge Application (1-10)',
+        'Pharmacy Practice Skills (1-10)',
         'Confidence Building (1-10)',
-        'Learning Value (1-10)',
+        'Engagement & Enjoyment (1-10)',
         'Would Recommend (1-10)',
         'Additional Comments',
         'Message Count',
         'User Agent'
     ];
-    
+
     const values = [
         data.timestamp,
         data.sessionId,
         `"${data.name || ''}"`,
         `"${data.email || ''}"`,
+        `"${data.model_selection || ''}"`,
         `"${data.currentScenario ? data.currentScenario.name : ''}"`,
         `"${data.systemInfo.chatbotConfig}"`,
         data.ratings.realistic_responses || '',
         data.ratings.user_friendly || '',
-        data.ratings.appropriate_responses || '',
+        data.ratings.natural_interaction || '',
         data.ratings.communication_skills || '',
-        data.ratings.pharma_knowledge || '',
+        data.ratings.practice_skills || '',
         data.ratings.confidence || '',
-        data.ratings.learning_value || '',
+        data.ratings.enjoyment || '',
         data.ratings.recommend || '',
         `"${data.additional_comments.replace(/"/g, '""')}"`, // Escape quotes in comments
         data.systemInfo.messageCount,
@@ -9071,5 +9083,5 @@ document.addEventListener('keydown', function(event) {
         
     </script>
 </body>
-</html>               
+</html>        
 
